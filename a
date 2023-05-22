@@ -1,0 +1,65 @@
+use NORTHWND1
+
+
+select * from Orders where ShipCountry='Brazil'
+
+
+create view Conuntrybrazil as
+select * from Orders where ShipCountry='Brazil'
+
+select * from Conuntrybrazil
+
+create view order_by_product as 
+select ProductName, count(*) Quantity
+from [Order Details] OD
+	join Products P on OD.ProductID = P.ProductID
+	group by ProductName
+
+select * from order_by_product
+
+
+select min (quantity) from order_by_product
+
+select ProductName from order_by_product where quantity=(select min (quantity) from order_by_product)
+
+create function f_orders_quantity_by_country(@country nvarchar(15))
+returns int 
+as
+begin
+	declare @quantity int
+	select @quantity=count(*) from Orders where ShipCountry = @country
+	return @quantity
+end;
+
+print dbo.f_orders_quantity_by_country('Mexico')
+
+------------------------------------------------------------------------------------------------------------
+
+create function f_orders_quantity_by_employee(@employeeID int)
+returns int 
+as
+begin
+	declare @quantity int
+	select @quantity=count(*) from Orders where EmployeeID = @employeeID
+	return @quantity
+end;
+
+select quantity=count(*) from Orders where EmployeeID =1
+
+create view orders_quantity_by_year_by_customer_country
+as
+select year(OrderDate) as year, Country, count(*) as Quantity
+from Orders as O
+	inner join Customers as C on O.CustomerID = C.CustomerID
+group by year(OrderDate), Country
+
+select min(Quantity) from orders_quantity_by_year_by_customer_country where year=2018
+
+select Country from orders_quantity_by_year_by_customer_country 
+where Quantity=(select min(Quantity) 
+from orders_quantity_by_year_by_customer_country where year=2018)
+
+create view orders_quantity_by_year_by_customer_country
+as
+select year(OrderDate) as Year, Country, count(*) as Quantity
+from orders AS O
